@@ -1,25 +1,95 @@
 ---
 title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
+author: "rb wiley"
+date: "Wednesday, April 15, 2015"
+output: html_document
+keep_md: true
 ---
 
 
 ## Loading and preprocessing the data
+- Read the data file into database (previously unzipped in working directory)
+- Basic EDA: summarize it
+```{r Loadcsv}
+activity <- read.csv("activity.csv", )
 
-
+```
+- Basic EDA: summarize data file
+```{r SummarizeData}
+summary(activity)
+```
 
 ## What is mean total number of steps taken per day?
+- group steps by day
+- view as a histogram
+```{r}
+steps_day <- aggregate(steps ~ date, data = activity, FUN = sum)
+barplot(steps_day$steps, names.arg = steps_day$date, xlab = "Date", ylab = "# Steps")
+```
 
-
-
+- count the days
+- calculate mean and median of steps by day
+```{r CalcMeanMedian}
+nrow(steps_day); mean(steps_day$steps)
+median(steps_day$steps)
+```
 ## What is the average daily activity pattern?
+- view as time series of average daily steps (y-axis) by 5-in interval (x axis)
 
+```{r PlotIntervalMeans}
+interval_mean <- aggregate(steps ~ interval, data = activity, FUN = mean)
+plot(interval_mean, type = "l")
+```
 
+- Which interval has the maximum average # of steps
+```{r FindMaxInterval}
+interval_mean$interval[which.max(interval_mean$steps)]
+```
 
 ## Imputing missing values
+- Tally the missing values ('NA') in steps variable
+- Confirm that tally from summary() function
+
+```{r TallyNAs}
+sum(is.na(activity))
+##  confirm the tally:
+summary(is.na(activity$steps))
+```
+
+- replace 'NA' values with interval means
+- summarize the new dataset
+- to see if replaced 'NAs' changed usable days, compare the counts of days
+  - aggregate new daily steps
+```{r ImputReplaceNAs}
+activity_noNA1 <- merge(activity, interval_mean, by = "interval", 
+    suffixes = c("",".ivl"))
+NA_cases <- is.na(activity_noNA1$steps)
+activity_noNA1$steps[NA_cases] <- activity_noNA1$steps.ivl[NA_cases]
+activity_noNA2 <- activity_noNA1[, c(1:3)]
+summary(activity_noNA2)
+steps_day2 <- aggregate(steps ~ date, data = activity_noNA2, FUN = sum)
+
+```
+
+- count the raw & raw + imputed days; show difference
+```{r CountDays} 
+no_Raw_days <- nrow(steps_day) 
+no_Imputed_days <- nrow(steps_day2) 
+```
+
+### `r no_Imputed_days - no_Raw_days` *all 'NA'* days recovered, now included: 
+### Raw: `r no_Raw_days` days
+### Imputed: `r no_Imputed_days` days
 
 
+- view histogram of new dataset having imputed missing data
+```{r HistoImputedNAs}
+steps_day2 <- aggregate(steps ~ date, data = activity_noNA2, FUN = sum)
+barplot(steps_day2$steps, names.arg = steps_day2$date, xlab = "Date", ylab = "# Steps")
+```
 
 ## Are there differences in activity patterns between weekdays and weekends?
+
+```{r WeekdayWeekendComparison}
+
+```
